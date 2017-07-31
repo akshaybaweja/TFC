@@ -38,7 +38,7 @@ def build_speechlet_response_without_card(output, reprompt_text, should_end_sess
         'shouldEndSession': should_end_session
     }
 
-def build_dialog_delegate(output, should_end_session, intent):
+def build_dialog_delegate(intent, should_end_session):
     return {
         'shouldEndSession': should_end_session,
         'directives': [
@@ -101,9 +101,30 @@ def make_complain_suggestion(intent, session, deviceId):
 def get_complain_suggestion_description(intent, session):
     session_attributes={}
     should_end_session = False
-    speech_output = "Thanks, I will let the community manager know about it."
     return build_response(session_attributes, build_dialog_delegate(
-        speech_output, should_end_session,intent))
+        intent, should_end_session))
+
+def meeting_room_booking(intent, session, deviceId):
+    card_title = "Meeting Room Booking"
+    speech_output = "Your booking is confirmed. You will recieve an SMS shortly"
+    reprompt_text = speech_output
+    session_attributes={}
+    should_end_session = False
+    all_ok = True
+    while slot in intent['slots']:
+        print("_SLOT NAME: "+str(slot))
+        if not "value" in slot:
+            all_ok = False
+    
+    if all_ok:
+        print("INTENT - FINAL: " + str(intent))
+        should_end_session = True
+        return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
+    else:
+        print("INTENT: " + str(intent))
+        return build_response(session_attributes, build_dialog_delegate(
+            intent, should_end_session))
 
 def handle_session_end_request():
     card_title = "Thank you"
@@ -153,6 +174,8 @@ def on_intent(intent_request, session, deviceId):
     # Dispatch to your skill's intent handlers
     if intent_name == "ComplaintSuggestion":
         return make_complain_suggestion(intent, session, deviceId)
+    elif intent_name == "MeetingRoomBooking":
+        return meeting_room_booking(intent, session, deviceId)
     elif intent_name == "AMAZON.HelpIntent":
         return get_help(intent,session)
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
